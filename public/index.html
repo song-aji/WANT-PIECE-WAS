@@ -12,6 +12,11 @@
             overflow-y: scroll;
             margin-bottom: 10px;
         }
+        #username {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -25,7 +30,14 @@
     </form>
 
     <div id="chatbot-section" style="display:none;">
+        <div id="username"></div>
         <h2>Chatbot</h2>
+
+        <div>
+            <label for="system-input">System Role:</label>
+            <input type="text" id="system-input" placeholder="Enter system role instructions" />
+        </div>
+
         <div id="chat-log"></div>
         <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" />
         <button id="send-button">Send</button>
@@ -50,7 +62,11 @@
                 alert('Login successful!');
                 document.getElementById('login-form').style.display = 'none';
                 document.getElementById('chatbot-section').style.display = 'block';
+
                 sessionStorage.setItem('token', result.token);
+                sessionStorage.setItem('name', result.name);
+
+                document.getElementById('username').textContent = `Welcome, ${result.name}`;
             } else {
                 alert('Login failed: ' + (result.message || 'Invalid credentials'));
             }
@@ -67,6 +83,7 @@
 
         async function sendMessage() {
             const userInput = document.getElementById('user-input').value;
+            const systemInput = document.getElementById('system-input').value;
             const chatLog = document.getElementById('chat-log');
 
             if (!userInput.trim()) {
@@ -86,15 +103,18 @@
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
                 },
-                body: JSON.stringify({ message: userInput })
+                body: JSON.stringify({
+                    message: userInput,
+                    systemRole: systemInput
+                })
             });
 
             const result = await response.json();
             if (response.ok) {
                 chatLog.innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
                 chatLog.innerHTML += `<p><strong>Bot:</strong> ${result.response}</p>`;
-                document.getElementById('user-input').value = ''; // 입력 필드 초기화
-                chatLog.scrollTop = chatLog.scrollHeight; // 가장 아래로 스크롤
+                document.getElementById('user-input').value = '';
+                chatLog.scrollTop = chatLog.scrollHeight;
             } else {
                 alert('Error: ' + result.message);
             }
