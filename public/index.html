@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login and Chatbot</title>
+    <style>
+        #chat-log {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
     <h1>Login</h1>
@@ -18,7 +27,7 @@
     <div id="chatbot-section" style="display:none;">
         <h2>Chatbot</h2>
         <div id="chat-log"></div>
-        <input type="text" id="user-input" placeholder="Type your message..." />
+        <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" />
         <button id="send-button">Send</button>
     </div>
 
@@ -43,19 +52,39 @@
                 document.getElementById('chatbot-section').style.display = 'block';
                 sessionStorage.setItem('token', result.token);
             } else {
-                alert('Login failed: ' + result.message);
+                alert('Login failed: ' + (result.message || 'Invalid credentials'));
             }
         });
 
-        document.getElementById('send-button').addEventListener('click', async function() {
+        document.getElementById('send-button').addEventListener('click', sendMessage);
+
+        // Enter key to send message
+        document.getElementById('user-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
             const userInput = document.getElementById('user-input').value;
             const chatLog = document.getElementById('chat-log');
+
+            if (!userInput.trim()) {
+                alert('Please enter a message.');
+                return;
+            }
+
+            const token = sessionStorage.getItem('token');
+            if (!token) {
+                alert('You need to login first!');
+                return;
+            }
 
             const response = await fetch('/chatbot', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                    'Authorization': 'Bearer ' + token
                 },
                 body: JSON.stringify({ message: userInput })
             });
@@ -64,10 +93,12 @@
             if (response.ok) {
                 chatLog.innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
                 chatLog.innerHTML += `<p><strong>Bot:</strong> ${result.response}</p>`;
+                document.getElementById('user-input').value = ''; // 입력 필드 초기화
+                chatLog.scrollTop = chatLog.scrollHeight; // 가장 아래로 스크롤
             } else {
                 alert('Error: ' + result.message);
             }
-        });
+        }
     </script>
 </body>
 </html>
