@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login and Chatbot</title>
+    <style>
+        #chat-log {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+        }
+        #username {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Login</h1>
+    <form id="login-form">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br><br>
+        <button type="submit">Login</button>
+    </form>
+
+    <div id="chatbot-section" style="display:none;">
+<<<<<<< HEAD
+        <div id="username"></div>
+        <h2>Chatbot</h2>
+
+=======
+        <div id="username"></div>  <!-- 사용자 이름을 표시하는 부분 -->
+        <h2>Chatbot</h2>
+
+        <!-- System role 입력 -->
+>>>>>>> 9f9fb23 (update 0904)
+        <div>
+            <label for="system-input">System Role:</label>
+            <input type="text" id="system-input" placeholder="Enter system role instructions" />
+        </div>
+
+        <div id="chat-log"></div>
+        <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" />
+        <button id="send-button">Send</button>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                alert('Login successful!');
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('chatbot-section').style.display = 'block';
+
+<<<<<<< HEAD
+                sessionStorage.setItem('token', result.token);
+                sessionStorage.setItem('name', result.name);
+
+=======
+                // 사용자 이름과 토큰을 저장
+                sessionStorage.setItem('token', result.token);
+                sessionStorage.setItem('name', result.name);
+
+                // 사용자 이름을 챗봇 화면에 표시
+>>>>>>> 9f9fb23 (update 0904)
+                document.getElementById('username').textContent = `Welcome, ${result.name}`;
+            } else {
+                alert('Login failed: ' + (result.message || 'Invalid credentials'));
+            }
+        });
+
+        document.getElementById('send-button').addEventListener('click', sendMessage);
+
+        // Enter key to send message
+        document.getElementById('user-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const userInput = document.getElementById('user-input').value;
+<<<<<<< HEAD
+            const systemInput = document.getElementById('system-input').value;
+=======
+            const systemInput = document.getElementById('system-input').value;  // system 역할에 해당하는 입력값
+>>>>>>> 9f9fb23 (update 0904)
+            const chatLog = document.getElementById('chat-log');
+
+            if (!userInput.trim()) {
+                alert('Please enter a message.');
+                return;
+            }
+
+            const token = sessionStorage.getItem('token');
+            if (!token) {
+                alert('You need to login first!');
+                return;
+            }
+
+            const response = await fetch('/chatbot', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                    message: userInput,
+<<<<<<< HEAD
+                    systemRole: systemInput
+=======
+                    systemRole: systemInput  // 사용자가 입력한 system 역할 추가
+>>>>>>> 9f9fb23 (update 0904)
+                })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                chatLog.innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
+                chatLog.innerHTML += `<p><strong>Bot:</strong> ${result.response}</p>`;
+<<<<<<< HEAD
+                document.getElementById('user-input').value = '';
+                chatLog.scrollTop = chatLog.scrollHeight;
+=======
+                document.getElementById('user-input').value = ''; // 입력 필드 초기화
+                chatLog.scrollTop = chatLog.scrollHeight; // 가장 아래로 스크롤
+>>>>>>> 9f9fb23 (update 0904)
+            } else {
+                alert('Error: ' + result.message);
+            }
+        }
+    </script>
+</body>
+</html>
+<<<<<<< HEAD
+=======
+
+>>>>>>> 9f9fb23 (update 0904)
