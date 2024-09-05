@@ -21,10 +21,12 @@ db.once('open', function() {
 });
 
 const app = express();
-const port = 8080;
+const port = 8080;  // 포트 설정 수정
 
 app.use(express.static('public'));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));  // URL-encoded 데이터를 처리
+
 app.set('view engine', 'ejs');
 
 // OpenAI 설정
@@ -103,19 +105,27 @@ app.get('/users', async (req, res) => {
 // 로그인 라우트
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
 
-  if (!user) {
-    return res.status(400).send('Invalid email or password');
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required' });
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return res.status(400).send('Invalid email or password');
-  }
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  res.send({ token, name: user.name });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token, message: 'Login successful!' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // Chatbot 라우트
