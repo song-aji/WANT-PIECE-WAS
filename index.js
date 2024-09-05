@@ -12,8 +12,6 @@ dotenv.config();
 
 // MongoDB 연결 설정
 mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
 });
 
 const db = mongoose.connection;
@@ -92,6 +90,16 @@ app.post('/users', async (req, res) => {
   }
 });
 
+// 사용자 목록 조회 라우트 (GET /users)
+app.get('/users', async (req, res) => {
+  try {
+    const users = await User.find(); // 모든 사용자 가져오기
+    res.status(200).send(users);
+  } catch (error) {
+    res.status(500).send({ message: 'Error fetching users' });
+  }
+});
+
 // 로그인 라우트
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -132,6 +140,7 @@ app.post('/chatbot', authenticateToken, async (req, res) => {
 });
 
 // 서버 실행
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(`App running on http://localhost:${port}`);
 });
+
