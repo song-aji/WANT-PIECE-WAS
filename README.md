@@ -3,15 +3,15 @@
 
 실행할때 따라할것
 
-sudo apt update
-sudo apt install git
-sudo apt install nodejs
-sudo apt install npm
-git clone https://github.com/leeSB096/WANT-PIECE-WAS
-cd WANT-PIECE-WAS
-npm install
-nano .env
-npm start
+sudo apt update \\
+sudo apt install git \\
+sudo apt install nodejs \\
+sudo apt install npm \\
+git clone https://github.com/leeSB096/WANT-PIECE-WAS \\
+cd WANT-PIECE-WAS \\
+npm install \\
+nano .env \\
+npm start \\
 
 
 # 백그라운드 실행시
