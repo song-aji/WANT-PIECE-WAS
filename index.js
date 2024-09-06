@@ -93,7 +93,7 @@ app.get('/', (req, res) => {
 });
 
 // 사용자 등록 라우트
-app.post('/users', async (req, res) => {
+app.post('/api/users', async (req, res) => {
   const user = new User(req.body);
   try {
     await user.save();
@@ -104,7 +104,7 @@ app.post('/users', async (req, res) => {
 });
 
 // 사용자 목록 조회 라우트 (GET /users)
-app.get('/users', async (req, res) => {
+app.get('/api/users', async (req, res) => {
   try {
     const users = await User.find(); // 모든 사용자 가져오기
     res.status(200).send(users);
