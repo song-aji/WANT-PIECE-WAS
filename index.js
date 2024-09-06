@@ -12,6 +12,7 @@ dotenv.config();
 
 // MongoDB 연결 설정
 mongoose.connect(process.env.MONGO_URI, {
+  // 추가 설정 가능
 });
 
 const db = mongoose.connection;
@@ -19,6 +20,16 @@ db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function() {
   console.log('Connected to MongoDB');
 });
+
+// MongoDB Conversation 스키마 정의
+const conversationSchema = new mongoose.Schema({
+  userId: String,
+  role: String,
+  content: String,
+  timestamp: { type: Date, default: Date.now }
+});
+
+const Conversation = mongoose.model('Conversation', conversationSchema);
 
 const app = express();
 const port = 8080;  // 포트 설정 수정
@@ -30,12 +41,15 @@ app.use(express.urlencoded({ extended: true }));  // URL-encoded 데이터를 �
 app.set('view engine', 'ejs');
 
 // OpenAI 설정
+if (!process.env.OPENAI_API_KEY) {
+  console.error("OPENAI_API_KEY is not set.");
+}
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,  // 환경 변수로부터 API 키를 가져옴
+  apiKey: process.env.OPENAI_API_KEY || 'default-api-key',  // 환경 변수가 없을 경우 기본값 추가
 });
 
 // ChatGPT API와 상호작용하는 함수
-async function getChatGPTResponse(message, systemRole) {
+async function getChatGPTResponse(messages, systemRole) {
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4",
@@ -44,10 +58,7 @@ async function getChatGPTResponse(message, systemRole) {
           role: "system",
           content: systemRole || "You are a helpful assistant."
         },
-        {
-          role: "user",
-          content: message
-        }
+        ...messages // 이전 대화 기록 추가
       ],
       temperature: 1,
       max_tokens: 256,
@@ -103,7 +114,7 @@ app.get('/users', async (req, res) => {
 });
 
 // 로그인 라우트
-app.post('/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -128,8 +139,8 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Chatbot 라우트
-app.post('/chatbot', authenticateToken, async (req, res) => {
+// 이전 대화 기록을 저장하고 가져오는 기능 추가 (MongoDB 사용)
+app.all('/api/chatbot', authenticateToken, async (req, res) => {
   const { message, systemRole } = req.body;
 
   try {
@@ -141,10 +152,21 @@ app.post('/chatbot', authenticateToken, async (req, res) => {
       await user.save();
     }
 
-    const botResponse = await getChatGPTResponse(message, user.systemRole);
+    // MongoDB에서 사용자 대화 기록을 가져오기
+    const conversation = await Conversation.find({ userId });
+
+    // 이전 대화 기록과 함께 ChatGPT API 요청
+    const botResponse = await getChatGPTResponse([...conversation.map(c => ({
+      role: c.role, content: c.content
+    })), { role: 'user', content: message }], user.systemRole);
+
+    // MongoDB에 새로운 대화 기록 저장
+    await new Conversation({ userId, role: 'user', content: message }).save();
+    await new Conversation({ userId, role: 'assistant', content: botResponse }).save();
 
     res.send({ response: botResponse });
   } catch (error) {
+    console.error("Error interacting with ChatGPT API:", error);
     res.status(500).send({ message: 'Error interacting with ChatGPT API' });
   }
 });
