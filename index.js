@@ -139,6 +139,44 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// 사용자 등록 라우트 (POST /api/register)
+app.post('/api/register', async (req, res) => {
+  const { name, email, password } = req.body;
+
+  // 입력값 유효성 검사
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  try {
+    // 기존 사용자 확인
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // 비밀번호 암호화
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 새 사용자 생성
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+    });
+
+    // 사용자 저장
+    await newUser.save();
+
+    // JWT 토큰 생성 (선택 사항)
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    res.status(201).json({ token, message: 'User registered successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // 이전 대화 기록을 저장하고 가져오는 기능 추가 (MongoDB 사용)
 app.all('/api/chatbot', authenticateToken, async (req, res) => {
   const { message, systemRole } = req.body;
